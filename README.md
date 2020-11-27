@@ -4,7 +4,7 @@ En este documento explico como conectar una Arduino a una Rasperry Pi por puerto
 
 ## Empezando desde 0 con la Raspberry Pi
 
-Para empezar hace falta instalar el SO en la RPi. Para grabar el SO en la microSD, se recomiendo usar el software proporcionado por los creadores, [Raspberry Pi Imager](https://www.raspberrypi.org/software/). 
+Para empezar hace falta instalar el SO en la RPi. Para grabar el SO en la microSD, se recomiendo usar el software proporcionado por los creadores, [Raspberry Pi Imager](https://www.raspberrypi.org/software/).
 
 Para instalar el sistema:
 
@@ -68,6 +68,43 @@ Para encontrar la Arduino por USB a la Raspberry Pi, la conectas, y vuelves a ej
 
 En mi caso (y seguramente en el tuyo) es `ACM0`.
 
+## Preparar la Arduino
+
+Para la prueba, se ha conectado un [joystick](https://aprendiendoarduino.wordpress.com/2018/10/16/joystick-arduino/) a los puertos analógicos A0 y A1 de la Arduino. El código es el siguiente:
+
+```arduino
+int vx;
+int vy;
+int mapX;
+int mapY;
+
+void setup()
+{
+    pinMode(A0, INPUT);
+    pinMode(A1, INPUT);
+    Serial.begin(9600);
+}
+
+void loop()
+{
+    vx = analogRead(A0);
+    vy = analogRead(A1);
+
+    vx = map(vx, 0, 1023, -512, 512);
+    vy = map(vy, 0, 1023, -512, 512);
+
+    Serial.print("X: ");
+    Serial.print(vx);
+    Serial.print(" | Y: ");
+    Serial.print(vy);
+    Serial.print("\n");
+
+    delay(100);
+}
+```
+
+También se puede encontrar en [sketch_joystick.ino](./sketch_joystick.ino) de este repositorio.
+
 ## Acceso a puerto serie desde Python (opcional)
 
 Para probar si funciona todo bien, usaré Python para hacerlo rápido y no tener que usar C++.
@@ -101,4 +138,65 @@ Para guardar el archivo, **Ctrl+S** y para salir,   **Ctrl+X**. Para ejecutarlo,
 
 ```bash
 python serial_read.py
+```
+
+También se puede encontrar en [serial_read.ino](./serial_read.py) de este repositorio.
+
+## Acceso a puerto serie desde C++
+
+Antes que nada, hace falta la librería [WiringPi](http://wiringpi.com/download-and-install/), aunque ésta viene con la Raspberry Pi, así que no nos tenemos que preocupar.
+
+Para acceder al puerto serie desde C++, he escrito el siguiente script:
+
+```cpp
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+
+#include <wiringSerial.h>
+
+int main ()
+{
+  int fd ;
+
+  if((fd=serialOpen("/dev/ttyACM0",9600))<0){
+    fprintf(stderr,"Unable to open serial device: %s\n",strerror(errno));
+    return 1;
+  }
+
+  for (;;){
+    putchar(serialGetchar(fd));
+    fflush(stdout);
+  }
+}
+```
+
+También se puede encontrar en [serialRead.cpp](./serialRead.cpp) de este repositorio.
+
+Para compilarlo:
+
+```bash
+g++ -Wall -o serialRead serialRead.cpp -lwiringPi  
+```
+
+Nótese que hace falta añadir `-lwiringPi` para añadir la librería, si no, no funciona.
+
+Para correr el script:
+
+```bash
+.\serialRead
+```
+
+Si todo ha salido bien, debe aparecer algo así:
+
+```bash
+pi@raspberrypi:~/Desktop $ ./serialRead
+X: 4 | Y: -3
+X: 4 | Y: -2
+X: 4 | Y: -12
+X: 4 | Y: -23
+X: 5 | Y: -26
+X: 4 | Y: -23
+X: 4 | Y: -18
+X: 5 | Y: -12
 ```
