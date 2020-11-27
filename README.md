@@ -2,6 +2,18 @@
 
 En este documento explico como conectar una Arduino a una Rasperry Pi por puerto serie para obtener los datos y grabarlos en la microSD.
 
+## Índice
+
+1. [Grabación de datos de sensores con Raspberry Pi 3B+](#grabación-de-datos-de-sensores-con-raspberry-pi-3b)
+2. [Empezando desde 0 con la Raspberry Pi](#empezando-desde-0-con-la-raspberry-pi)
+3. [Configurar SSH para usar la Raspberry Pi desde remoto (opcional)](#configurar-ssh-para-usar-la-raspberry-pi-desde-remoto-opcional)
+4. [Acceder a los puertos serie](#acceder-a-los-puertos-serie)
+5. [Preparar la Arduino](#preparar-la-arduino)
+6. [Acceso a puerto serie desde Python (opcional)](#acceso-a-puerto-serie-desde-python-opcional)
+7. [Acceso a puerto serie desde C++](#acceso-a-puerto-serie-desde-c)
+
+
+
 ## Empezando desde 0 con la Raspberry Pi
 
 Para empezar hace falta instalar el SO en la RPi. Para grabar el SO en la microSD, se recomiendo usar el software proporcionado por los creadores, [Raspberry Pi Imager](https://www.raspberrypi.org/software/).
@@ -41,7 +53,7 @@ La herramienta te preguntará si deseas activar el servidor SSH, lo que deberás
 Para conectarte desde otro PC saber la IP de la Raspberry Pi. Para verla, escribe en la terminal:
 
 ```bash
-hostname –I`
+hostname –I
 ```
 
 En mi caso la IP es `192.168.0.159`. Para conectarme desde mi PC, instalé [PuTTY](https://www.putty.org/) (un cliente SSH para Windows.) y en la terminal pongo:
