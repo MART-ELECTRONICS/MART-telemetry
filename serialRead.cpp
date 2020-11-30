@@ -1,21 +1,17 @@
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <wiringSerial.h>
 #include <iostream>
 
 using namespace std;
 
-string getCurrentDateTime(string s)
+string getCurrentDateTime()
 {
     time_t now = time(0);
     struct tm tstruct;
     char buf[80];
     tstruct = *localtime(&now);
-    if (s == "now")
-        strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
-    else if (s == "date")
-        strftime(buf, sizeof(buf), "%Y-%m-%d", &tstruct);
+    strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
     return string(buf);
 };
 
