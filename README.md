@@ -183,8 +183,6 @@ int main ()
 }
 ```
 
-También se puede encontrar en [serialRead.cpp](./serialRead.cpp) de este repositorio.
-
 Para compilarlo:
 
 ```bash
@@ -212,3 +210,107 @@ X: 4 | Y: -23
 X: 4 | Y: -18
 X: 5 | Y: -12
 ```
+
+## Escritura a memoria
+
+Para escribir a memoria necesitamos abrir un archivo, que será `output.txt` que
+se creará en el mismo directorio. Para controlar la frecuencia de muestreo, se
+utilizará `usleep()` de la librería `unistd`. El código es el siguiente:
+
+```cpp
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <wiringSerial.h>
+#include <unistd.h>
+#include <iostream>
+using namespace std;
+
+string getCurrentDateTime(string s)
+{
+    time_t now = time(0);
+    struct tm tstruct;
+    char buf[80];
+    tstruct = *localtime(&now);
+    if (s == "now")
+        strftime(buf, sizeof(buf), "%Y-%m-%d %X", &tstruct);
+    else if (s == "date")
+        strftime(buf, sizeof(buf), "%Y-%m-%d", &tstruct);
+    return string(buf);
+};
+
+int main()
+{
+    int fd;
+
+    if ((fd = serialOpen("/dev/ttyACM0", 9600)) < 0)
+    {
+        fprintf(stderr, "Unable to open serial device: %s\n", strerror(errno));
+        return 1;
+    }
+
+    for (;;)
+    {
+        string now = getCurrentDateTime("now");
+        freopen("output.txt", "a", stdout);
+
+        cout << now << " :: " << serialGetchar(fd) << endl;
+
+        usleep(10);
+    }
+}
+
+```
+
+Este es el achivo [serialRead.cpp](serialRead.cpp).
+
+Compilamos y ejecutamos.
+
+```bash
+g++ -Wall -o serialRead serialRead.cpp -lwiringPi  
+.\serialRead
+```
+
+## Script en Python para escuchar el botón de inicio de logeo
+
+Para hacer que la Raspberry Pi siempre escuche el botón para empezar/parar el
+logeo, utilizaremos un script de Python que se iniciará automáticamente con el
+sistema. El script es el siguiente:
+
+```python
+import subprocess
+import RPi.GPIO as GPIO
+import time
+import signal
+import os
+
+# Pin set (input and pull down)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(15, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+running = 0
+
+# log script
+writing_script = "/home/pi/Desktop/test_arduino"
+
+while True:
+    """ listening loop"""
+    pressed = GPIO.input(15)
+    if pressed and not running:
+        p = subprocess.Popen(writing_script, shell=True, preexec_fn=os.setsid)
+        print(f"{writing_script} initialized")
+        time.sleep(1)
+        running = True
+    pressed = GPIO.input(15)
+    if pressed and running:
+        os.killpg(p.pid, signal.SIGTERM)
+        print(f"{writing_script} killed")
+        time.sleep(1)
+        running = False
+```
+
+Este es el achivo [launcher.py](launcher.py).
+
+El script escucha el puerto 15 de GPIO.
+
+La siguiente tarea será escribir este script a autoarranque de la Raspberry Pi
+para que cuando se inicie, el script escuche el pin 15 de GPIO.
